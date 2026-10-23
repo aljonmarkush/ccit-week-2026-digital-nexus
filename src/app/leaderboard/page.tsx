@@ -13,11 +13,11 @@ export interface ScoreUpdate {
   points: number;
   activity: string;
   date: string;
+  note?: string;
 }
 
 export default function LiveLeaderboard() {
   const [updates, setUpdates] = useState<ScoreUpdate[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const fetchScores = async () => {
     try {
@@ -34,20 +34,19 @@ export default function LiveLeaderboard() {
           points: Number(item.points) || 0,
           activity: item.activity || "Daily activity",
           date: item.event_date || item.created_at?.split("T")[0] || "",
+          note: item.note || "",
         }));
         setUpdates(formatted);
       }
     } catch (err) {
       console.error("Fetch exception:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchScores();
 
-    // Real-time listener for score updates
+    // Listen for real-time updates from Supabase
     const channel = supabase
       .channel("public:group_score_updates")
       .on(
@@ -64,20 +63,21 @@ export default function LiveLeaderboard() {
     };
   }, []);
 
-  // Compute total standings grouped by group_id
+  // Compute standings totals by group_id
   const totalsMap: { [key: string]: { points: number; updates: number } } = {};
   updates.forEach((item) => {
-    if (!totalsMap[item.groupId]) {
-      totalsMap[item.groupId] = { points: 0, updates: 0 };
+    const key = item.groupId;
+    if (!totalsMap[key]) {
+      totalsMap[key] = { points: 0, updates: 0 };
     }
-    totalsMap[item.groupId].points += item.points;
-    totalsMap[item.groupId].updates += 1;
+    totalsMap[key].points += item.points;
+    totalsMap[key].updates += 1;
   });
 
   const standings = Object.keys(totalsMap)
     .map((id) => ({
       id,
-      name: id.toUpperCase(),
+      name: id === "404" ? "404 NOT FOUND" : id === "retry" ? "RETRY" : id.toUpperCase(),
       points: totalsMap[id].points,
       updates: totalsMap[id].updates,
     }))
@@ -90,16 +90,10 @@ export default function LiveLeaderboard() {
       <div className="live-board-status">
         <span className="live-dot" />
         <Radio size={15} /> LIVE SCOREBOARD{" "}
-        <span className="live-status-note">Synced live with Supabase database</span>
+        <span className="live-status-note">Updates as score entries are saved</span>
       </div>
 
-      {loading && (
-        <div className="live-empty">
-          <p>Loading live scores...</p>
-        </div>
-      )}
-
-      {!loading && !hasScores && (
+      {!hasScores && (
         <div className="live-empty">
           <Trophy size={32} />
           <h3>THE RACE STARTS HERE.</h3>
@@ -107,7 +101,7 @@ export default function LiveLeaderboard() {
         </div>
       )}
 
-      {!loading && hasScores && (
+      {hasScores && (
         <div className="live-board-list">
           {standings.map((group, index) => (
             <article className={`live-board-row rank-${index + 1}`} key={group.id}>
@@ -135,7 +129,7 @@ export default function LiveLeaderboard() {
         </div>
       )}
 
-      {!loading && hasScores && (
+      {hasScores && (
         <div className="live-recent">
           <h3>
             <Activity size={16} /> RECENT DAILY UPDATES
@@ -143,15 +137,16 @@ export default function LiveLeaderboard() {
           {[...updates].reverse().slice(0, 5).map((item) => (
             <div className="live-recent-item" key={item.id}>
               <span>{item.date}</span>
-              <strong>{item.groupId.toUpperCase()}</strong>
+              <strong>{item.groupId === "404" ? "404 NOT FOUND" : item.groupId === "retry" ? "RETRY" : item.groupId.toUpperCase()}</strong>
               <span>{item.activity || "Daily activity"}</span>
               <b>+{item.points}</b>
             </div>
           ))}
         </div>
       )}
+
       <p className="live-board-footnote">
-        Production mode: connected to Supabase live database with real-time updates.
+        Synced live with Supabase database. Real-time updates active.
       </p>
     </div>
   );

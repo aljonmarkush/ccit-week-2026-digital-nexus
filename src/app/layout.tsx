@@ -70,10 +70,10 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${spaceGrotesk.variable} ${anton.variable} scroll-smooth`}
     >
-      <body className="min-h-screen bg-[#050507] text-white antialiased selection:bg-[#C6FF33] selection:text-black">
+      <body className="min-h-screen flex flex-col bg-[#050507] text-white antialiased selection:bg-[#C6FF33] selection:text-black">
         <ScrollEffects />
         <Navbar />
-        <main>{children}</main>
+        <main className="flex-grow">{children}</main>
         <Footer />
       </body>
     </html>

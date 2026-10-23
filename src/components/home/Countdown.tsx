@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react";
 
 export default function Countdown() {
-  // Set your official event target date here (e.g., CCIT Week kickoff)
-  const targetDate = new Date("2026-11-15T08:00:00").getTime();
+  // Official CCIT Week kickoff: November 17, 2026 at 08:00:00
+  const targetDate = new Date("2026-11-17T08:00:00").getTime();
 
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -53,7 +53,7 @@ export default function Countdown() {
         <strong>{String(timeLeft.seconds).padStart(2, "0")}</strong>
         <span>SEC</span>
       </div>
-      <p className="countdown-note">OFFICIAL KICKOFF COUNTDOWN</p>
+      <p className="countdown-note">OFFICIAL KICKOFF · NOV 17-18, 2026</p>
     </div>
   );
 }
